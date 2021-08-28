@@ -1,7 +1,7 @@
-let { TsConfigPathsPlugin } = require('awesome-typescript-loader');
-let LiveReloadPlugin = require('webpack-livereload-plugin');
-let path = require('path');
-let fs = require('fs');
+const TsConfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const LiveReloadPlugin = require('webpack-livereload-plugin');
+const path = require('path');
+const fs = require('fs');
 
 const packageData = require("../../package.json");
 
@@ -10,6 +10,7 @@ let create = (entries, tsConfig, outDir, filename) => {
     entry: entries,
     mode: 'development',
     devtool: 'source-map',
+    target: ['web', 'es5'],
     optimization: {
       removeAvailableModules: false,
       removeEmptyChunks: false,
@@ -19,20 +20,23 @@ let create = (entries, tsConfig, outDir, filename) => {
       symlinks: false,
       extensions: ['.ts', '.js'],
       plugins: [
-        // We need to use the awesome typescript loader config paths since the one for ts-loader doesn't resolve aliases correctly
         new TsConfigPathsPlugin({
-          baseUrl: '.',
-          compiler: 'typescript',
-          configFileName: tsConfig
+          configFile: tsConfig,
+          extensions: ['.ts', '.js']
         })
       ]
     },
     module: {
       rules: [
         {
+          test: /\.js$/,
+          resolve: {
+            fullySpecified: false
+          }
+        },
+        {
           test: /\.(svg)$/i,
-          loader: 'raw-loader',
-          type: 'javascript/auto'
+          type: 'asset/source'
         },
         {
           test: /\.ts$/,
@@ -65,7 +69,7 @@ let create = (entries, tsConfig, outDir, filename) => {
                   declarationMap: false
                 },
                 configFile: tsConfig,
-                experimentalWatchApi: true
+                projectReferences: true
               }
             }
           ]
@@ -83,38 +87,38 @@ let create = (entries, tsConfig, outDir, filename) => {
   };
 };
 
-let buildDemoEntries = (pluginNames, type, demo) => pluginNames.reduce(
+const buildDemoEntries = (pluginNames, type, demo) => pluginNames.reduce(
   (acc, name) => {
-    var tsfile = `src/${type}/${name}/demo/ts/demo/${demo}`;
+    const tsfile = `src/${type}/${name}/demo/ts/demo/${demo}`;
     if (fs.existsSync(tsfile)) { acc[name] = tsfile; }
     return acc;
   }, {}
 );
 
-let buildEntries = (pluginNames, type, entry) => pluginNames.reduce(
+const buildEntries = (pluginNames, type, entry) => pluginNames.reduce(
   (acc, name) => {
     acc[name] = `src/${type}/${name}/main/ts/${entry}`;
     return acc;
   }, {}
 );
 
-let createPlugin = (name) => {
+const createPlugin = (name) => {
   return create(`src/plugins/${name}/demo/ts/demo/Demo.ts`, 'tsconfig.plugin.json', `scratch/demos/plugins/${name}/`, 'demo.js');
 };
 
-let createTheme = (name) => {
+const createTheme = (name) => {
   return create(`src/themes/${name}/demo/ts/demo/Demos.ts`, 'tsconfig.theme.json', `scratch/demos/themes/${name}`, 'demo.js');
 };
 
-let allPluginDemos = (plugins) => {
+const allPluginDemos = (plugins) => {
   return create(buildDemoEntries(plugins, 'plugins', 'Demo.ts'), 'tsconfig.plugin.json', 'scratch/demos/plugins', 'demo.js')
 };
 
-let allThemeDemos = (themes) => {
+const allThemeDemos = (themes) => {
   return create(buildDemoEntries(themes, 'themes', 'Demos.ts'), 'tsconfig.theme.json', 'scratch/demos/themes', 'demo.js')
 };
 
-let all = (plugins, themes) => {
+const all = (plugins, themes) => {
   return [
     allPluginDemos(plugins),
     allThemeDemos(themes),
@@ -126,9 +130,9 @@ let all = (plugins, themes) => {
   ];
 };
 
-let generateDemoIndex = (grunt, app, plugins, themes) => {
-  let demoList = grunt.file.expand(['src/**/demo/html/*.html', 'src/**/demo/html/**/*.html']);
-  let sortedDemos = demoList.reduce((acc, link) => {
+const generateDemoIndex = (grunt, app, plugins, themes) => {
+  const demoList = grunt.file.expand(['src/**/demo/html/*.html', 'src/**/demo/html/**/*.html']);
+  const sortedDemos = demoList.reduce((acc, link) => {
     const type = link.split('/')[1];
 
     if (!acc[type]) {
@@ -140,16 +144,16 @@ let generateDemoIndex = (grunt, app, plugins, themes) => {
     return acc;
   }, {});
 
-  let lists = Object.keys(sortedDemos).map(
+  const lists = Object.keys(sortedDemos).map(
     type => `
     <h2>${type}</h2>
     <ul>
       ${sortedDemos[type].map(
-        link => `<li>${type !== 'core' ? `<strong>${link.split('/')[2]}</strong> - ` : ''}<a href="${link}">${path.basename(link)}</a></li>`).join('')
-      }
+      link => `<li>${type !== 'core' ? `<strong>${link.split('/')[2]}</strong> - ` : ''}<a href="${link}">${path.basename(link)}</a></li>`).join('')
+    }
     </ul>`
   ).join('');
-  let html = `
+  const html = `
   <!DOCTYPE html>
   <html lang="en">
   <head>
