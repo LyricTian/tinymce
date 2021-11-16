@@ -239,14 +239,14 @@ module.exports = function (grunt) {
     ),
 
     webpack: Object.assign(
-      {core: () => {
-          gruntWebPack.create('src/core/demo/ts/demo/Demos.ts', 'tsconfig.json', 'scratch/demos/core', 'demo.js');
-          gruntWebPack.create('src/core/demo/ts/demo/ContentSecurityPolicyDemo.ts', 'tsconfig.json', 'scratch/demos/core', 'cspdemo.js');
-        }},
-      {plugins: () => gruntWebPack.allPluginDemos(plugins)},
-      {themes: () => {
-        gruntWebPack.allThemeDemos(themes);
-      }},
+      {
+        core: () => [
+          gruntWebPack.create('src/core/demo/ts/demo/Demos.ts', 'tsconfig.json', 'scratch/demos/core', 'demo.js'),
+          gruntWebPack.create('src/core/demo/ts/demo/ContentSecurityPolicyDemo.ts', 'tsconfig.json', 'scratch/demos/core', 'cspdemo.js')
+        ],
+        plugins: () => gruntWebPack.allPluginDemos(plugins),
+        themes: () => gruntWebPack.allThemeDemos(themes)
+      },
       gruntUtils.generate(plugins, 'plugin', (name) => () => gruntWebPack.createPlugin(name) ),
       gruntUtils.generate(themes, 'theme', (name) => () => gruntWebPack.createTheme(name) )
     ),
